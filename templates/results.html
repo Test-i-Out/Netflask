@@ -1,0 +1,183 @@
+{% extends "base.html" %} {% block title %}Analysis Results - {{ device.name }}
+- FireMon{% endblock %} {% block content %}
+<div class="min-h-screen bg-background">
+	<!-- Header -->
+	<div class="border-b border-border bg-card/50 backdrop-blur">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+			<div class="flex items-center gap-4 mb-4">
+				<a href="javascript:history.back()" class="back-to-search">
+					<i data-lucide="arrow-left" class="w-4 h-4"></i>
+					<- Back to Devices
+				</a>
+			</div>
+
+			<div
+				class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+			>
+				<div>
+					<h1 class="text-3xl font-bold mb-2">Analysis Results</h1>
+					<div class="space-y-1">
+						<p class="text-muted-foreground">
+							Device:
+							<span class="font-semibold text-foreground"
+								>{{ device.name }}</span
+							>
+							(ID: {{ device.id }})
+						</p>
+						<p class="text-muted-foreground">
+							Query:
+							<span class="font-mono text-sm bg-muted px-2 py-1 rounded"
+								>{{ query }}</span
+							>
+						</p>
+					</div>
+				</div>
+
+				<a
+					href="/export?query={{ query | urlencode }}&deviceId={{ device.id }}"
+					class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+				>
+					<i data-lucide="download" class="w-4 h-4"></i>
+					Export CSV
+				</a>
+			</div>
+		</div>
+	</div>
+
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+		<!-- Statistics Cards -->
+		<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
+			<div class="bg-card border border-border rounded-lg p-4 text-center">
+				<div class="text-2xl font-bold text-primary">{{ stats.total }}</div>
+				<div class="text-sm text-muted-foreground">Total Rules</div>
+			</div>
+			<div class="bg-card border border-border rounded-lg p-4 text-center">
+				<div class="text-2xl font-bold text-green-500">{{ stats.accept }}</div>
+				<div class="text-sm text-muted-foreground">Accept</div>
+			</div>
+			<div class="bg-card border border-border rounded-lg p-4 text-center">
+				<div class="text-2xl font-bold text-red-500">{{ stats.deny }}</div>
+				<div class="text-sm text-muted-foreground">Deny</div>
+			</div>
+			<div class="bg-card border border-border rounded-lg p-4 text-center">
+				<div class="text-2xl font-bold text-orange-500">{{ stats.drop }}</div>
+				<div class="text-sm text-muted-foreground">Drop</div>
+			</div>
+			<div class="bg-card border border-border rounded-lg p-4 text-center">
+				<div class="text-2xl font-bold text-yellow-500">{{ stats.unused }}</div>
+				<div class="text-sm text-muted-foreground">Unused</div>
+			</div>
+			<div class="bg-card border border-border rounded-lg p-4 text-center">
+				<div class="text-2xl font-bold text-purple-500">
+					{{ stats.redundant }}
+				</div>
+				<div class="text-sm text-muted-foreground">Redundant</div>
+			</div>
+			<div class="bg-card border border-border rounded-lg p-4 text-center">
+				<div class="text-2xl font-bold text-blue-500">{{ stats.shadowed }}</div>
+				<div class="text-sm text-muted-foreground">Shadowed</div>
+			</div>
+			<div class="bg-card border border-border rounded-lg p-4 text-center">
+				<div class="text-2xl font-bold text-red-600">
+					{{ stats.highSeverity }}
+				</div>
+				<div class="text-sm text-muted-foreground">High Risk</div>
+			</div>
+		</div>
+
+		<!-- Rules Table -->
+		{% if rules %}
+		<div class="bg-card border border-border rounded-lg overflow-hidden">
+			<div class="overflow-x-auto">
+				<table class="w-full">
+					<thead class="bg-muted/50">
+						<tr>
+							<th class="text-left p-4 font-semibold">Rule Name</th>
+							<th class="text-left p-4 font-semibold">Sources</th>
+							<th class="text-left p-4 font-semibold">Destinations</th>
+							<th class="text-left p-4 font-semibold">Services</th>
+							<th class="text-left p-4 font-semibold">Action</th>
+							<th class="text-left p-4 font-semibold">Last Used</th>
+							<th class="text-left p-4 font-semibold">Status</th>
+							{% if rules|selectattr('severity')|list %}
+							<th class="text-left p-4 font-semibold">Severity</th>
+							{% endif %}
+						</tr>
+					</thead>
+					<tbody>
+						{% for rule in rules %}
+						<tr class="{% if loop.index0 % 2 == 0 %}bg-muted/20{% endif %}">
+							<td class="p-4 font-mono text-sm">{{ rule.name }}</td>
+							<td class="p-4 text-sm">{{ rule.sources|join(', ') }}</td>
+							<td class="p-4 text-sm">{{ rule.destinations|join(', ') }}</td>
+							<td class="p-4 text-sm">{{ rule.services|join(', ') }}</td>
+							<td class="p-4">
+								<span class="rule-action {{ rule.action | lower }}">
+									{% if rule.action == 'ACCEPT' %}
+									<i data-lucide="check-circle" class="w-3 h-3">✅</i>
+									{% elif rule.action == 'DENY' %}
+									<i data-lucide="x-circle" class="w-3 h-3">❌</i>
+									{% else %}
+									<i data-lucide="alert-triangle" class="w-3 h-3">⚠️ </i>
+									{% endif %} {{ rule.action }}
+								</span>
+							</td>
+							<td class="p-4 text-sm">
+								{% if rule.lastUsed %}
+								<div class="flex items-center gap-1">
+									<img
+										src="{{ url_for('static', filename='/icons/output-onlinepngtools (5) - Copy.png') }}"
+										class="w-3 h-3 inline-block align-text-bottom"
+										alt="Clock History Icon"
+									/>
+
+									{{ rule.lastUsed[:10] }}
+								</div>
+								{% else %}
+								<span class="text-muted-foreground">Never</span>
+								{% endif %}
+							</td>
+							<td class="p-4">
+								<div class="flex gap-1">
+									{% if not rule.enabled %}
+									<span class="status-tag disabled">Disabled</span>
+									{% endif %} {% if rule.redundant %}
+									<span class="status-tag redundant">Redundant</span>
+									{% endif %} {% if rule.shadowed %}
+									<span class="status-tag shadowed">Shadowed</span>
+									{% endif %}
+								</div>
+							</td>
+							{% if rules|selectattr('severity')|list %}
+							<td class="p-4">
+								{% if rule.severity %}
+								<span
+									class="px-2 py-1 text-xs rounded border {% if rule.severity >= 8 %} severity-high {% elif rule.severity >= 5 %} severity-medium {% else %} severity-low {% endif %}"
+								>
+									{{ rule.severity }}
+								</span>
+								{% endif %}
+							</td>
+							{% endif %}
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+		{% else %}
+		<div class="bg-card border border-border rounded-lg p-16 text-center">
+			<i
+				data-lucide="activity"
+				class="w-16 h-16 text-muted-foreground mx-auto mb-4"
+			></i>
+			<h3 class="text-xl font-semibold mb-2">No Rules Found</h3>
+			<p class="text-muted-foreground">
+				The query didn't return any rules for this device. Try a different query
+				or device.
+			</p>
+		</div>
+		{% endif %}
+	</div>
+</div>
+{% endblock %}

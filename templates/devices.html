@@ -1,0 +1,146 @@
+{% extends "base.html" %} {% block title %}Select Device - FireMon{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-background">
+	<!-- Header -->
+	<div class="border-b border-border bg-card/50 backdrop-blur">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+			<div class="flex items-center gap-4 mb-4">
+				<a href="/" class="back-to-search">
+					<i data-lucide="arrow-left" class="w-4 h-4"></i>
+					<- Back to Search
+				</a>
+			</div>
+
+			<div class="mb-6">
+				<h1 class="text-3xl font-bold mb-2">Select Device</h1>
+				<p class="text-muted-foreground">
+					Choose a device to analyze with query:
+					<span class="font-mono text-sm bg-muted px-2 py-1 rounded"
+						>{{ query }}</span
+					>
+				</p>
+			</div>
+
+			<!-- Filters -->
+			<div class="flex flex-col sm:flex-row gap-4">
+				<div class="relative flex-1">
+					<i
+						data-lucide="search"
+						class="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4"
+					></i>
+					<input
+						type="text"
+						id="deviceSearch"
+						placeholder="Filter devices..."
+						class="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+					/>
+				</div>
+
+				<div class="flex items-center gap-2">
+					<i data-lucide="filter" class="w-4 h-4 text-muted-foreground"></i>
+					&nbsp; &nbsp;&nbsp;&nbsp;
+					<select
+						id="statusFilter"
+						class="px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+					>
+						<option value="all">All Status</option>
+						<option value="online">Online</option>
+						<option value="offline">Offline</option>
+						<option value="maintenance">Maintenance</option>
+					</select>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Device Grid -->
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+		<div class="mb-6 flex justify-between items-center">
+			<p class="text-muted-foreground" id="deviceCount">
+				Showing {{ devices|length }} devices
+			</p>
+		</div>
+
+		<div
+			class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+			id="deviceGrid"
+		>
+			{% for device in devices %}
+			<div
+				class="device-card p-4 bg-card border border-border rounded-lg hover:shadow-lg transition-all duration-200 cursor-pointer hover:border-primary/50 group"
+				data-device-id="{{ device.id }}"
+				data-device-name="{{ device.name }}"
+				data-device-status="{{ device.status }}"
+				data-device-type="{{ device.type }}"
+				data-device-domain="{{ device.domain }}"
+			>
+				<div class="flex items-start justify-between mb-3">
+					<div class="flex items-center gap-2">
+						{% if device.status == 'online' %}
+						<i data-lucide="wifi" class="w-4 h-4 text-green-500"></i>
+						{% elif device.status == 'offline' %}
+						<i data-lucide="wifi-off" class="w-4 h-4 text-red-500"></i>
+						{% else %}
+						<i data-lucide="settings" class="w-4 h-4 text-yellow-500"></i>
+						{% endif %}
+						<h3
+							class="font-semibold text-sm group-hover:text-primary transition-colors"
+						>
+							{{ device.name }}
+						</h3>
+					</div>
+					<i
+						data-lucide="chevron-right"
+						class="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors"
+					></i>
+				</div>
+
+				<div class="space-y-2 mb-4">
+					<div class="flex items-center justify-between text-xs">
+						<span class="text-muted-foreground">Type</span>
+						<span class="font-medium">{{ device.type }}</span>
+					</div>
+					<div class="flex items-center justify-between text-xs">
+						<span class="text-muted-foreground">Domain</span>
+						<span class="font-medium">{{ device.domain }}</span>
+					</div>
+					<div class="flex items-center justify-between text-xs">
+						<span class="text-muted-foreground">Rules</span>
+						<span class="font-medium"
+							>{{ "{:,}".format(device.rulesCount) }}</span
+						>
+					</div>
+				</div>
+
+				<div class="flex items-center justify-between">
+					<span
+						class="status-badge px-2 py-1 text-xs rounded border {% if device.status == 'online' %} bg-green-500/10 text-green-500 border-green-500/20 {% elif device.status == 'offline' %} bg-red-500/10 text-red-500 border-red-500/20 {% else %} bg-yellow-500/10 text-yellow-500 border-yellow-500/20 {% endif %}"
+					>
+						{{ device.status }}
+					</span>
+					<span class="text-xs text-muted-foreground">
+						ID: {{ device.id }}
+					</span>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+
+		<div id="noDevicesMessage" class="text-center py-16 hidden">
+			<i
+				data-lucide="server"
+				class="w-16 h-16 text-muted-foreground mx-auto mb-4"
+			></i>
+			<h3 class="text-xl font-semibold mb-2">No devices found</h3>
+			<p class="text-muted-foreground">
+				Try adjusting your search filters or check back later.
+			</p>
+		</div>
+	</div>
+</div>
+
+<script>
+	// Store the query for navigation
+	window.currentQuery = "{{ query }}";
+</script>
+{% endblock %}
